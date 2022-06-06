@@ -1854,16 +1854,20 @@ const __main = () => {
     testExpression2()
     testExpression3()
     testExpression4()
+
     testDeclaration1()
     testDeclaration2()
     testDeclaration3()
     testDeclaration4()
     testDeclaration5()
+
     testIf1()
     testIf2()
     testIf3()
+
     test_while_1()
     test_for_1()
+
     test_Function_1()
     test_Function_2()
     test_Function_3()
@@ -1873,15 +1877,18 @@ const __main = () => {
     test_Function_7()
     test_Function_If_1()
     test_Function_Recursion_1()
+
     testBibk1()
     testBibk2()
     testBibk3()
+
     test_Array_1()
     test_Array_2()
     test_Array_3()
     test_Array_4()
     test_Array_5()
     test_Array_6()
+
     test_Object_1()
     test_Object_2()
     test_Object_3()
@@ -1889,7 +1896,24 @@ const __main = () => {
     test_Object_5()
     test_Object_6()
     // test_Object_7()
+
     testClass1()
+    testClass2()
+    testClass3()
+    testClass4()
+    testClass5()
+    testClass6()
+    testClass7()
+    testClass8()
+    testClass9()
+    testClass10()
+    testClass11()
+    testClass12()
+
+    // testClassExtend1()
+    // testClassExtend2()
+    // testClassExtend3()
+    // testClassExtend4()
 }
 
 __main()

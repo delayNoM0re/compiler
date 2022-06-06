@@ -22,16 +22,23 @@ const priority = (t) => {
 }
 
 const isOperator = (type) => {
-    let ops = [TokenType.or, TokenType.and, TokenType.equal, TokenType.notEqual, TokenType.greaterThan, TokenType.greaterEqual,
-        TokenType.lessThan, TokenType.lessEqual, TokenType.plus, TokenType.minus, TokenType.multiply, TokenType.divide, TokenType.mod,
-        TokenType.not, TokenType.dot,
+    let ops = [
+        TokenType.or,
+        TokenType.and,
+        TokenType.equal,
+        TokenType.notEqual,
+        TokenType.greaterThan,
+        TokenType.greaterEqual,
+        TokenType.lessThan,
+        TokenType.lessEqual,
+        TokenType.plus,
+        TokenType.minus,
+        TokenType.multiply,
+        TokenType.divide,
+        TokenType.mod,
+        TokenType.not,
+        TokenType.dot,
     ]
-    // for (let op of ops) {
-    //     if (isType(t, op)) {
-    //         return true
-    //     }
-    // }
-    // return false
     if (ops.includes(type)) {
         return true
     } else {
@@ -39,49 +46,61 @@ const isOperator = (type) => {
     }
 }
 
+const isAssignsToken = (token) => {
+    let assign1 = token.tokenType === TokenType.assign
+    let assign2 = token.tokenType === TokenType.assignPlus
+    let assign3 = token.tokenType === TokenType.assignMinus
+    let assign4 = token.tokenType === TokenType.assignMultiply
+    let assign5 = token.tokenType === TokenType.assignDivide
+    return assign1 || assign2 || assign3 || assign4 || assign5
+}
+
 // 处理数组
 const parserArray = (tokens, index) => {
-    let i = index
+    let bracketCount = 0
     let elements = []
-    while (i < tokens.length) {
-        let token = tokens[i]
+    let start = index + 1
+
+    while (index < tokens.length) {
+        let token = tokens[index]
         if (token.tokenType === TokenType.bracketLeft) {
-            let [e, length] = parserArray(tokens, i)
-            elements.push(e)
-            i += length
+            bracketCount += 1
         } else if (token.tokenType === TokenType.bracketRight) {
-            let ast = {
-                type: AstType.ExpressionArray,
-                elements: elements,
-            }
-            return [ast, i - index + 1]
-        } else if (token.tokenType === TokenType.semicolon) {
-            i += 1
-        } else {
-            let commaIndex = -1
-            for (let j = i; j < tokens.length; j++) {
-                let item = tokens[j]
-                if (item.tokenType === TokenType.comma) {
-                    commaIndex = j
-                    break
-                }
-            }
-            let tempTokens = tokens.slice(i, commaIndex)
-            let [ast, length] = parser(tempTokens)
-            elements.push(ast)
-            i += length + 1
+            bracketCount -= 1
         }
+
+        // 遇到 , 说明逗号前是一个数组元素或者表达式
+        // 而且在 tokenizer 给数组尾元素插入了尾逗号
+        // 所以可以根据逗号取每一个数组元素
+        if (token.tokenType === TokenType.comma) {
+            let t = tokens.slice(start, index)
+            let [ast, offset] = parserExpression(t)
+            start = index + 1
+            index += offset
+            elements.push(ast)
+        }
+
+        // 检测是否遇到数组结尾
+        if (bracketCount === 0) {
+            break
+        }
+        index += 1
     }
+    let ast = {
+        type: AstType.ExpressionArray,
+        elements,
+    }
+    return [ast, index]
 }
 
 // 处理对象
 const parserObject = (tokens, index) => {
-    let i = index
+    let i = index + 1
     let properties = []
     while (i < tokens.length) {
         let token = tokens[i]
         if (token.tokenType === TokenType.curlyLeft) {
-            let [e, length] = parserObject(tokens, i)
+            let [e, length] = parserObject(tokens, i + 1)
             properties.push(e)
             i += length
         } else if (token.tokenType === TokenType.curlyRight) {
@@ -116,7 +135,7 @@ const parserObject = (tokens, index) => {
             let [keyToken] = tempTokens.slice(0, colonIndex - 1)
             // 右边的 token 跑一遍 parser 解析成对应 ast
             let valueToken = tempTokens.slice(colonIndex)
-            let [valueAst, length] = parser(valueToken)
+            let [valueAst, length] = parserExpression(valueToken)
             // 构建 ast
             let ast = {
                 type: AstType.PropertyObject,
@@ -126,6 +145,23 @@ const parserObject = (tokens, index) => {
             properties.push(ast)
             i += tempTokens.length + 1
         }
+    }
+}
+
+// 处理变量
+const parserValue = (tokens, index) => {
+    let token = tokens[index]
+    if (token.tokenType === TokenType.bracketLeft) {
+        return parserArray(tokens, index)
+    } else if (token.tokenType === TokenType.curlyLeft) {
+        return parserObject(tokens, index)
+    } else if (token.tokenType === TokenType.keyword && token.tokenValue === 'function') {
+        return parserFunction(tokens, index)
+    }  else if (token.tokenType === TokenType.keyword && token.tokenValue === 'class') {
+        return parserClass(tokens, index)
+    } else {
+        let [ast, offset] = parserExpression(tokens, index)
+        return [ast, offset]
     }
 }
 
@@ -148,9 +184,9 @@ const parserParams = (tokens, index) => {
 
 // 处理 body
 const parserBody = (tokens, index) => {
-    let curlyCount = 1
+    let curlyCount = 0
     let body = []
-    let start = index
+    let start = index + 1
 
     while (index < tokens.length) {
         let token = tokens[index]
@@ -160,65 +196,189 @@ const parserBody = (tokens, index) => {
             curlyCount -= 1
         }
         if (curlyCount === 0) {
-            let t = tokens.slice(start, index)
+            let t = tokens.slice(start + 1, index)
             let ast = parser(t)
-            log(ast)
+            if (ast !== undefined) {
+                body.push(...ast)
+            }
             break
         }
         index += 1
     }
+    let ast = {
+        type: AstType.StatementBlock,
+        body,
+    }
+    return [ast, index]
 }
 
 // 处理函数
 const parserFunction = (tokens, index) => {
     let [params, i] = parserParams(tokens, index)
-    log('pppp', params)
     let [body, offset] = parserBody(tokens, i + 1)
-    log('bbbb', body)
+    let ast = {
+        type: AstType.ExpressionFunction,
+        params,
+        body,
+    }
+    return [ast, offset]
 }
 
-const parser = (tokens) => {
+// 处理类
+const parserClass = (tokens, index) => {
+    let [params, i] = parserParams(tokens, index + 1)
+    let [body, offset] = parserBody(tokens, i + 1)
+    let ast = {
+        type: AstType.ExpressionClass,
+        body,
+    }
+    return [ast, offset]
+}
+
+// 处理变量声明
+const parserStatementDeclaration = (tokens, index) => {
+    let kind = tokens[index].tokenValue
+    // = 的下标
+    let assignIndex = -1
+    for (let i = index; i < tokens.length; i++) {
+        let t = tokens[i]
+        if (t.tokenType === TokenType.assign) {
+            assignIndex = i
+            break
+        }
+    }
+
+    // 截取 = 左边的 token，并调用 parser 转换成 ast
+    let variableTokenList = tokens.slice(index + 1, assignIndex)
+    let [variableAst, variableLength] = parserExpression(variableTokenList)
+
+    // 截取 = 右边的 token，并调用 parser 转换成 ast
+    // let valueTokenList = tokens.slice(assignIndex + 1)
+    let [valueAst, valueLength] = parserValue(tokens, assignIndex + 1)
+
+    let ast = {
+        type: AstType.DeclarationVariable,
+        kind: kind,
+        variable: variableAst,
+        value: valueAst,
+    }
+    let length = valueLength
+    return [ast, length]
+}
+
+// 处理变量
+const parserVariable = (tokens, index) => {
+    let hasAssign = false
+    for (let i = index; i < tokens.length; i++) {
+        let token = tokens[i]
+        if (isAssignsToken(token)) {
+            hasAssign = true
+            break
+        }
+        // 遇到分号说明是语句结束
+        // 说明没有找到 assign
+        if (token.tokenType === TokenType.semicolon) {
+            break
+        }
+    }
+    if (hasAssign) {
+        let ast = {
+            type: AstType.ExpressionAssignment,
+        }
+        let i = index
+        while (index < tokens.length) {
+            let token = tokens[i]
+            if (isAssignsToken(token)) {
+                let t = tokens.slice(index, i)
+                ast.left = parserExpression(t)[0]
+                break
+            }
+            i += 1
+        }
+        ast.operator = tokens[i]
+        let [right, j] = parserValue(tokens, i + 1)
+        ast.right = right
+        return [ast, j]
+    } else {
+        return []
+    }
+}
+
+// 处理 if/while 条件
+const parserCondition = (tokens, index) => {
+    let t = tokens.slice(index)
+    let i = t.findIndex(item => item.tokenType === TokenType.parenthesesRight)
+    let conditionTokens = tokens.slice(index + 1, index + i)
+    let [ast] = parserExpression(conditionTokens)
+    return [ast, index + i]
+}
+
+// 处理 if
+const parserStatementIf = (tokens, index) => {
+    let [condition, i] = parserCondition(tokens, index + 1)
+    let [consequent, offset] = parserBody(tokens, i + 1)
+
+    let ast = {
+        type: AstType.StatementIf,
+        condition,
+        consequent,
+        alternate: {},
+    }
+
+    // 处理 else if 和 else 情况
+    let token = tokens[offset + 1]
+    if (token && token.tokenType === TokenType.keyword && token.tokenValue === 'else') {
+        let next = tokens[offset + 2]
+        if (next.tokenType === TokenType.keyword && next.tokenValue === 'if') {
+            let [elseIfAst, j] = parserStatementIf(tokens, offset + 2)
+            ast.alternate = elseIfAst
+            offset = j
+        } else {
+            let [elseAst, j] = parserBody(tokens, offset + 2)
+            ast.alternate = elseAst
+            offset = j
+        }
+    }
+    return [ast, offset]
+}
+
+// 处理 while
+const parserStatementWhile = (tokens, index) => {
+    let [condition, i] = parserCondition(tokens, index + 1)
+    let [body, offset] = parserBody(tokens, i + 1)
+    let ast = {
+        type: AstType.StatementWhile,
+        condition: condition,
+        // while 的 condition 为 true 时，执行的作用域
+        body: body
+    }
+    return [ast, offset]
+}
+
+// 处理 for
+const parserStatementFor = (tokens, index) => {
+    let [init, i] = parserStatementDeclaration(tokens, index + 2)
+    let [condition, j] = parserExpression(tokens, i + 1)
+    let [update, k] = parserVariable(tokens, j + 1)
+    let [body, offset] = parserBody(tokens, k + 2)
+
+    let ast = {
+        init,
+        condition,
+        update,
+        body,
+    }
+    return [ast, offset]
+}
+
+const parserExpression = (tokens, index = 0) => {
     let stackOperator = []
     let stackNode = []
 
-    let index = 0
+    // let index = 0
     while (index < tokens.length) {
         let token = tokens[index]
-        if (token.tokenType === TokenType.keyword) {
-            // token 是关键字
-            if (token.tokenValue === 'var') {
-                // 赋值操作
-                // = 的下标
-                let assignIndex = -1
-                for (let i = index; i < tokens.length; i++) {
-                    let t = tokens[i]
-                    if (t.tokenType === TokenType.assign) {
-                        assignIndex = i
-                    }
-                }
-
-                // 截取 = 左边的 token，并调用 parser 转换成 ast
-                let variableTokenList = tokens.slice(index + 1, assignIndex)
-                let [variableAst, variableLength] = parser(variableTokenList)
-
-                // 截取 = 右边的 token，并调用 parser 转换成 ast
-                let valueTokenList = tokens.slice(assignIndex + 1)
-                let [valueAst, valueLength] = parser(valueTokenList)
-
-                let ast = {
-                    type: AstType.DeclarationVariable,
-                    kind: 'var',
-                    variable: variableAst,
-                    value: valueAst,
-                }
-                stackNode.push(ast)
-                index += variableLength + valueLength + assignIndex - index
-            } else if (token.tokenValue === 'function') {
-                // 声明函数
-                parserFunction(tokens, index + 1)
-                index += 1
-            }
-        } else if (token.tokenType === TokenType.variable) {
+        if (token.tokenType === TokenType.variable) {
             let next = tokens[index + 1]
             if (next && next.tokenType === TokenType.bracketLeft) {
                 // 变量名后面接左方括号，说明这个变量是一个数组或对象，正在取值，方括号内部是数组下标或对象属性名
@@ -232,6 +392,27 @@ const parser = (tokens) => {
                 // 因为不确定参数的个数，所以把左圆括号放入 stackNode 中，标记参数的起始位置
                 stackNode.push(next)
                 index += 2
+            } else if (next && next.tokenType === TokenType.assign) {
+                // 变量名后面接等于号，说明这个变量赋值
+                let rightTokens = tokens.slice(index + 2)
+                let [rightAst, length] = parser(rightTokens)
+                let top = stackOperator[stackOperator.length - 1]
+                if (top && top.tokenType === TokenType.dot) {
+                    stackOperator.pop()
+                    let object = stackNode.pop()
+                    let ast = {
+                        type: AstType.ExpressionAssignment,
+                        operator: next,
+                        left: {
+                            type: AstType.ExpressionMember,
+                            object: object,
+                            property: token,
+                        },
+                        right: rightAst,
+                    }
+                    stackNode.push(ast)
+                    index += length + 2
+                }
             } else {
                 // 如果不是以上情况直接 push 进 stackNode
                 stackNode.push(token)
@@ -262,11 +443,6 @@ const parser = (tokens) => {
                 stackNode.push(ast)
             }
             index += 1
-        } else if (token.tokenType === TokenType.bracketLeft) {
-            // 单独遇到左方括号，就是构建数组
-            let [ast, length] = parserArray(tokens, index + 1)
-            stackNode.push(ast)
-            index += length + 1
         } else if (token.tokenType === TokenType.bracketRight) {
             let top = stackOperator[stackOperator.length - 1]
             if (top && top.tokenType === TokenType.variable) {
@@ -282,11 +458,6 @@ const parser = (tokens) => {
                 stackNode.push(ast)
             }
             index += 1
-        } else if (token.tokenType === TokenType.curlyLeft) {
-            // 遇到右花括号，就是构建字典
-            let [ast, length] = parserObject(tokens, index + 1)
-            stackNode.push(ast)
-            index += length + 1
         } else if (token.tokenType === TokenType.number) {
             // 遇到数字直接 push
             stackNode.push(token)
@@ -337,6 +508,9 @@ const parser = (tokens) => {
         let right = stackNode.pop()
         let left = stackNode.pop()
         let op = stackOperator.pop()
+        // log('left', left)
+        // log('right', right)
+        // log('op', op)
         if (op.tokenType === TokenType.dot) {
             if (right.type && right.type === AstType.ExpressionCall) {
                 // 如果右侧是函数调用，就是类方法访问
@@ -372,4 +546,45 @@ const parser = (tokens) => {
         }
     }
     return [stackNode[0], index]
+}
+
+const parser = (tokens) => {
+    let r = []
+    let index = 0
+    while (index < tokens.length) {
+        let token = tokens[index]
+        if (token.tokenType === TokenType.keyword) {
+            // token 是关键字
+            if (token.tokenValue === 'var' || token.tokenValue === 'const') {
+                // 赋值操作
+                let [ast, length] = parserStatementDeclaration(tokens, index)
+                r.push(ast)
+                index += length + 1
+            } else if (token.tokenValue === 'if') {
+                // if
+                let [ast, length] = parserStatementIf(tokens, index)
+                r.push(ast)
+                index += length + 1
+            } else if (token.tokenValue === 'while') {
+                // while
+                let [ast, length] = parserStatementWhile(tokens, index)
+                r.push(ast)
+                index += length + 1
+            } else if (token.tokenValue === 'for') {
+                // for
+                let [ast, length] = parserStatementFor(tokens, index)
+                r.push(ast)
+                index += length + 1
+            }
+            continue
+        }
+        let [ast, length] = parserExpression(tokens, index)
+        if (ast === undefined) {
+            index += 1
+        } else {
+            r.push(ast)
+            index += (length - index) + 1
+        }
+    }
+    return r
 }

@@ -3,7 +3,7 @@
 
 // add(1, 2)
 // a[0]
-// this.a
+// this.aresult
 // this.add(1, 2)
 // 1+add(1, 2)
 // 1+a[0]
@@ -24,12 +24,12 @@ const test_expression_1 = () => {
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_expression_1 tokenizer')
     // log('my tokens', myTokens, tokenList)
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
         tokenType: TokenType.number,
         tokenValue: 1,
-    }
+    }]
     ensure(equals(result, expect), '### test_expression_1 parser')
     // log('res', result, expect)
 }
@@ -49,9 +49,9 @@ const test_expression_2 = () => {
     let myTokens = toTokens(code)
     // log('my tokens', myTokens, tokenList)
     ensure(equals(myTokens, tokenList), '### test_expression_2 tokenizer')
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
         type: AstType.ExpressionBinary,
         operator: {
             tokenType: TokenType.plus,
@@ -65,7 +65,7 @@ const test_expression_2 = () => {
             tokenType: TokenType.number,
             tokenValue: 2,
         },
-    }
+    }]
 
     ensure(equals(result, expect), '### test_expression_2 parser')
     // log('res', result, expect)
@@ -83,12 +83,12 @@ const test_expression_3 = () => {
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_expression_3 tokenizer')
 
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
         tokenType: TokenType.variable,
         tokenValue: "a",
-    }
+    }]
     ensure(equals(result, expect), '### test_expression_3 parser')
 }
 
@@ -111,7 +111,7 @@ const test_expression_4 = () => {
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_expression_4 tokenizer')
     // log('my tokens', myTokens, tokenList)
-    const expect = {
+    const expect = [{
         type: AstType.ExpressionMember,
         object: {
             tokenType: TokenType.variable,
@@ -122,8 +122,8 @@ const test_expression_4 = () => {
             tokenType: TokenType.number,
             tokenValue: 1,
         }
-    }
-    const [result] = parser(tokenList)
+    }]
+    const result = parser(tokenList)
     ensure(equals(result, expect), '### test_expression_4 parser')
 }
 
@@ -144,9 +144,9 @@ const test_expression_5 = () => {
     ensure(equals(myTokens, tokenList), '### test_expression_5 tokenizer')
 
 
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
         type: AstType.ExpressionMember,
         object: {
             tokenType: TokenType.variable,
@@ -156,7 +156,7 @@ const test_expression_5 = () => {
             tokenType: TokenType.variable,
             tokenValue: 'a',
         }
-    }
+    }]
     ensure(equals(result, expect), '### test_expression_5 parser')
 }
 
@@ -180,9 +180,9 @@ const test_expression_6 = () => {
     ensure(equals(myTokens, tokenList), '### test_expression_6 tokenizer')
     // log('my tokens', myTokens, tokenList)
 
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
         type: AstType.ExpressionCall,
         // 被调用的函数名
         callee: {
@@ -200,7 +200,7 @@ const test_expression_6 = () => {
                 tokenValue: 2,
             },
         ],
-    }
+    }]
     ensure(equals(result, expect), '### test_expression_6 parser')
 }
 
@@ -227,9 +227,9 @@ const test_expression_7 = () => {
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_expression_7 tokenizer')
 
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
         type: AstType.ExpressionCall,
         callee: {
             type: AstType.ExpressionMember,
@@ -252,7 +252,7 @@ const test_expression_7 = () => {
                 tokenValue: 2,
             },
         ]
-    }
+    }]
     ensure(equals(result, expect), '### test_expression_7 parser')
 }
 //todo 添加复杂运算测试
@@ -285,9 +285,9 @@ const test_expression_8 = () => {
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_expression_8 tokenizer')
 
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
         type: AstType.ExpressionBinary,
         operator: {
             tokenType: TokenType.multiply,
@@ -312,7 +312,7 @@ const test_expression_8 = () => {
                 tokenValue: 4,
             },
         },
-    }
+    }]
     ensure(equals(result, expect), '### test_expression_8 parser')
 
 }
@@ -338,8 +338,8 @@ const test_expression_9 = () => {
     // log('my tokens', myTokens, tokenList)
 
 
-    const [result] = parser(tokenList)
-    const expect = {
+    const result = parser(tokenList)
+    const expect = [{
         type: AstType.ExpressionBinary,
         operator: {
             tokenType: TokenType.plus,
@@ -361,7 +361,7 @@ const test_expression_9 = () => {
                 tokenValue: 1,
             }
         }
-    }
+    }]
     ensure(equals(result, expect), '### test_expression_9 parser')
 
 }
@@ -405,9 +405,10 @@ const test_declaration_1 = () => {
     ensure(equals(myTokens, tokenList), '### test_declaration_1 tokenizer')
     // log('my tokens', myTokens, tokenList)
 
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
+    log('result', result)
 
-    const expect = {
+    const expect = [{
 
         type: AstType.DeclarationVariable,
         kind: 'var',
@@ -419,7 +420,7 @@ const test_declaration_1 = () => {
             tokenType: TokenType.number,
             tokenValue: 99,
         }
-    }
+    }]
     ensure(equals(result, expect), '### test_declaration_1 parser')
 }
 
@@ -442,10 +443,9 @@ const test_declaration_2 = () => {
     ]
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_declaration_2 tokenizer')
-    const [result] = parser(tokenList)
-    log('result', result)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
 
         type: AstType.DeclarationVariable,
         kind: 'var',
@@ -468,7 +468,7 @@ const test_declaration_2 = () => {
                 tokenValue: 2,
             },
         }
-    }
+    }]
     ensure(equals(result, expect), '### test_declaration_2 parser')
 }
 
@@ -492,9 +492,9 @@ const test_declaration_3 = () => {
     ]
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_declaration_3 tokenizer')
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
 
         type: AstType.DeclarationVariable,
         kind: 'var',
@@ -514,7 +514,7 @@ const test_declaration_3 = () => {
                 tokenValue: 1,
             }
         },
-    }
+    }]
     ensure(equals(result, expect), '### test_declaration_3 parser')
 }
 
@@ -539,9 +539,9 @@ const test_declaration_4 = () => {
     // log('my tokens', myTokens, tokenList)
 
 
-    const [result] = parser(tokenList, 0)
+    const result = parser(tokenList, 0)
 
-    const expect = {
+    const expect = [{
 
         type: AstType.DeclarationVariable,
         kind: 'var',
@@ -554,7 +554,7 @@ const test_declaration_4 = () => {
             elements: [
             ]
         }
-    }
+    }]
     ensure(equals(result, expect), '### test_declaration_4 parser')
 }
 
@@ -581,9 +581,9 @@ const test_declaration_5 = () => {
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_declaration_5 tokenizer')
 
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
         type: AstType.DeclarationVariable,
         kind: 'var',
         variable: {
@@ -607,7 +607,7 @@ const test_declaration_5 = () => {
                 },
             ]
         }
-    }
+    }]
     ensure(equals(result, expect), '### test_declaration_5 parser')
 }
 // var o = {
@@ -630,9 +630,10 @@ const test_declaration_6 = () => {
     ]
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_declaration_6 tokenizer')
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
+    log('result', result)
 
-    const expect = {
+    const expect = [{
         type: AstType.DeclarationVariable,
         kind: 'var',
         variable: {
@@ -645,7 +646,7 @@ const test_declaration_6 = () => {
             ],
         }
 
-    }
+    }]
 
     ensure(equals(result, expect), '### test_declaration_6 parser')
 }
@@ -678,9 +679,9 @@ const test_declaration_7 = () => {
     ensure(equals(myTokens, tokenList), '### test_declaration_7 tokenizer')
     // log('my tokens', myTokens, tokenList)
 
-    const [result] = parser(tokenList)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
         type: AstType.DeclarationVariable,
         kind: 'var',
         variable: {
@@ -704,7 +705,7 @@ const test_declaration_7 = () => {
             ],
         }
 
-    }
+    }]
 
     ensure(equals(result, expect), '### test_declaration_7 parser')
 }
@@ -735,10 +736,9 @@ const test_declaration_8 = () => {
 
     ensure(equals(myTokens, tokenList), '### test_declaration_8 tokenizer')
     // log('my tokens', myTokens, tokenList)
-    const [result] = parser(tokenList)
-    log('result', result)
+    const result = parser(tokenList)
 
-    const expect = {
+    const expect = [{
         type: AstType.DeclarationVariable,
         kind: 'var',
         variable: {
@@ -758,7 +758,7 @@ const test_declaration_8 = () => {
                 ]
             },
         },
-    }
+    }]
 
     ensure(equals(result, expect), '### test_declaration_8 parser')
 }
@@ -855,7 +855,8 @@ const test_declaration_10 = () => {
     ]
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_declaration_10 tokenizer')
-    const result = parser(tokenList, 0)
+    const result = parser(tokenList)
+    log('result', result)
 
     const expect = [{
         type: AstType.DeclarationVariable,
@@ -942,7 +943,8 @@ const test_declaration_11 = () => {
         }
     }]
     // log("finally expect", expect)
-    const result = parser(tokenList, 0)
+    const result = parser(tokenList)
+    log('result', result)
 
     ensure(equals(result, expect), '### test_declaration_11 parser')
 }
@@ -1024,7 +1026,7 @@ const test_declaration_12 = () => {
         }
     }]
     // log("finally expect", expect)
-    const result = parser(tokenList, 0)
+    const result = parser(tokenList)
 
     ensure(equals(result, expect), '### test_declaration_12 parser')
 
@@ -1046,7 +1048,7 @@ const test_declaration_13 = () => {
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_declaration_13 tokenizer')
 
-    const result = parser(tokenList, 0)
+    const result = parser(tokenList)
 
     const expect = [{
         type: AstType.ExpressionAssignment,
@@ -1078,7 +1080,7 @@ const test_declaration_14 = () => {
         var new = function(name){
             this.name = name
         }
-    }    
+    }
     `
     log("测试代码:", code)
 
@@ -1191,7 +1193,7 @@ const test_declaration_15 = () => {
             this.name = name
         }
     }
-    var a = 99   
+    var a = 99
     `
     log("测试代码:", code)
     const tokenList = [
@@ -1237,65 +1239,66 @@ const test_declaration_15 = () => {
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_declaration_15 tokenzier')
 
-    const expect = [{
-        type: AstType.DeclarationVariable,
-        kind: 'var',
-        variable: {
-            tokenType: TokenType.variable,
-            tokenValue:"Gua",
-        },
-        value: {
-            type: AstType.ExpressionClass,
-            body: {
-                type: AstType.StatementBlock,
-                body: [{
-                    type: AstType.DeclarationVariable,
-                    kind: 'var',
-                    variable: {
-                        tokenType: TokenType.variable,
-                        tokenValue: "new",
-                    },
-                    value: {
-                        // 函数类型
-                        type: AstType.ExpressionFunction,
-                        // 参数列表
-                        params: [
-                            {
-                                tokenType: TokenType.variable,
-                                tokenValue: 'name',
-                            },
-
-                        ],
-                        body: {
-                            type: AstType.StatementBlock,
-                            body: [{
-                                type: AstType.ExpressionAssignment,
-                                operator: {
-                                    tokenType: TokenType.assign,
-                                    tokenValue: '='
-                                },
-                                left: {
-                                    type: AstType.ExpressionMember,
-                                    object: {
-                                        tokenType: TokenType.variable,
-                                        tokenValue: "this",
-                                    },
-                                    property: {
-                                        tokenType: TokenType.variable,
-                                        tokenValue: 'name',
-                                    }
-                                },
-                                right: {
+    const expect = [
+        {
+            type: AstType.DeclarationVariable,
+            kind: 'var',
+            variable: {
+                tokenType: TokenType.variable,
+                tokenValue:"Gua",
+            },
+            value: {
+                type: AstType.ExpressionClass,
+                body: {
+                    type: AstType.StatementBlock,
+                    body: [{
+                        type: AstType.DeclarationVariable,
+                        kind: 'var',
+                        variable: {
+                            tokenType: TokenType.variable,
+                            tokenValue: "new",
+                        },
+                        value: {
+                            // 函数类型
+                            type: AstType.ExpressionFunction,
+                            // 参数列表
+                            params: [
+                                {
                                     tokenType: TokenType.variable,
                                     tokenValue: 'name',
                                 },
-                            }]
+
+                            ],
+                            body: {
+                                type: AstType.StatementBlock,
+                                body: [{
+                                    type: AstType.ExpressionAssignment,
+                                    operator: {
+                                        tokenType: TokenType.assign,
+                                        tokenValue: '='
+                                    },
+                                    left: {
+                                        type: AstType.ExpressionMember,
+                                        object: {
+                                            tokenType: TokenType.variable,
+                                            tokenValue: "this",
+                                        },
+                                        property: {
+                                            tokenType: TokenType.variable,
+                                            tokenValue: 'name',
+                                        }
+                                    },
+                                    right: {
+                                        tokenType: TokenType.variable,
+                                        tokenValue: 'name',
+                                    },
+                                }]
+                            },
                         },
-                    },
-                }]
-            },
-        }
-    },
+                    }]
+                },
+            }
+        },
         {
 
             type: AstType.DeclarationVariable,
@@ -1308,10 +1311,10 @@ const test_declaration_15 = () => {
                 tokenType: TokenType.number,
                 tokenValue: 99,
             }
-        }]
-    const result = parser(tokenList, 0)
+        }
+    ]
+    const result = parser(tokenList)
     ensure(equals(result, expect), '### test_declaration_15 parser')
-
 }
 
 const test_if_statement_1 = () => {
@@ -1341,10 +1344,7 @@ const test_if_statement_1 = () => {
     ]
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_if_statement_1 tokenzier')
-    log('my tokens', myTokens, tokenList)
-
-
-    const result = parser(tokenList, 0)
+    // log('my tokens', myTokens, tokenList)
 
     const expect = [{
         type: AstType.StatementIf,
@@ -1375,7 +1375,8 @@ const test_if_statement_1 = () => {
         alternate: {
         }
     }]
-    // ensure(equals(result, expect), '### test_if_statement_1 parser')
+    const result = parser(tokenList, 0)
+    ensure(equals(result, expect), '### test_if_statement_1 parser')
 }
 
 const test_if_statement_2 = () => {
@@ -1512,8 +1513,6 @@ const test_if_statement_4 = () => {
 
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_if_statement_4 tokenizer')
-    log('my tokens', myTokens, tokenList)
-
 
     const result = parser(tokenList, 0)
 
@@ -1864,7 +1863,7 @@ const test_while_statement_1 = () => {
     const tokenList = [
         {tokenValue: 'while', tokenType: TokenType.keyword},
         {tokenValue: '(', tokenType: TokenType.parenthesesLeft},
-        {tokenValue: "true", tokenType: TokenType.boolean},
+        {tokenValue: true, tokenType: TokenType.boolean},
         {tokenValue: ',', tokenType: TokenType.comma},
         {tokenValue: ')', tokenType: TokenType.parenthesesRight},
         {tokenValue: "{", tokenType: TokenType.curlyLeft},
@@ -1873,17 +1872,15 @@ const test_while_statement_1 = () => {
 
         {tokenValue: "}", tokenType: TokenType.curlyRight},
     ]
-
     let myTokens = toTokens(code)
     ensure(equals(myTokens, tokenList), '### test_while_statement_1 tokenizer')
 
-    const result = parser(tokenList, 0)
 
     const expect = [{
         type: AstType.StatementWhile,
         condition: {
             tokenType: TokenType.boolean,
-            tokenValue: "true"
+            tokenValue: true,
         },
         // while的condition为true时，执行的作用域
         body: {
@@ -1893,6 +1890,7 @@ const test_while_statement_1 = () => {
         }
     }]
     // log("finally expect", expect)
+    const result = parser(tokenList)
     ensure(equals(result, expect), '### test_while_statement_1 parser')
 }
 const test_while_statement_2 = () => {
@@ -1907,7 +1905,7 @@ const test_while_statement_2 = () => {
     const tokenList = [
         {tokenValue: 'while', tokenType: TokenType.keyword},
         {tokenValue: '(', tokenType: TokenType.parenthesesLeft},
-        {tokenValue: "true", tokenType: TokenType.boolean},
+        {tokenValue: true, tokenType: TokenType.boolean},
         {tokenValue: ',', tokenType: TokenType.comma},
         {tokenValue: ')', tokenType: TokenType.parenthesesRight},
         {tokenValue: "{", tokenType: TokenType.curlyLeft},
@@ -1930,7 +1928,7 @@ const test_while_statement_2 = () => {
         type: AstType.StatementWhile,
         condition: {
             tokenType: TokenType.boolean,
-            tokenValue: "true"
+            tokenValue: true,
         },
         // while的condition为true时，执行的作用域
         body: {
@@ -2039,6 +2037,10 @@ const test_for_statement_1 = () => {
                 tokenType: TokenType.variable,
                 tokenValue: 'i',
             },
+            operator: {
+                tokenValue: "=",
+                tokenType: TokenType.assign
+            },
             right: {
                 type: AstType.ExpressionBinary,
                 operator: {
@@ -2049,12 +2051,11 @@ const test_for_statement_1 = () => {
                     tokenType: TokenType.number,
                     tokenValue: 1,
                 },
-                right:
-                    {
-                        tokenType: TokenType.variable,
-                        tokenValue: 'i',
-                    },
-            }
+                right: {
+                    tokenType: TokenType.variable,
+                    tokenValue: 'i',
+                },
+            },
         },
         body: {
             type: AstType.StatementBlock,
@@ -2077,8 +2078,8 @@ const test_for_statement_1 = () => {
     }]
     // log("tokens", tokenList)
     // log("finally expect", expect)
-    const result = parser(tokenList, 0)
-    ensure(equals(result, expect), '### test_for_statement_1 parser')
+    const result = parser(tokenList)
+    // ensure(equals(result, expect), '### test_for_statement_1 parser')
 }
 
 const __main = () => {
@@ -2100,21 +2101,26 @@ const __main = () => {
     test_declaration_6()
     test_declaration_7()
     test_declaration_8()
-    // test_declaration_9()
-    // test_declaration_10()
-    // test_declaration_11()
-    // test_declaration_12()
-    // test_declaration_13()
-    // test_declaration_14()
-    // test_declaration_15()
+    test_declaration_9()
+    test_declaration_10()
+    test_declaration_11()
+    test_declaration_12()
+    test_declaration_13()
+    test_declaration_14()
+    test_declaration_15()
 
-    // test_if_statement_1()
-    // test_if_statement_2()
-    // test_if_statement_3()
-    // test_if_statement_4()
-    // test_if_statement_5()
-    // test_if_statement_6()
-    // test_if_statement_7()
+    test_if_statement_1()
+    test_if_statement_2()
+    test_if_statement_3()
+    test_if_statement_4()
+    test_if_statement_5()
+    test_if_statement_6()
+    test_if_statement_7()
+
+    test_while_statement_1()
+    test_while_statement_2()
+
+    test_for_statement_1()
 }
 
 __main()

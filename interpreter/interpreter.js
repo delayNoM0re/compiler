@@ -37,13 +37,26 @@ const applyExpressionBinary = (ast, env) => {
 
 // 变量声明
 const applyDeclarationVariable = (ast, env) => {
-    // 拿到变量名称
-    let name = ast.variable.value
-    // 数据可能是二维表达式或者其他情况
-    // 所以将数据用 interpret 跑一遍得到值
-    let value = interpret(ast.value, env)
-    // 讲变量名称和数据绑定一起
-    env.binding(name, value)
+    let variable = ast.variable
+    if (variable.type === TokenType.variable) {
+        // 拿到变量名称
+        let name = variable.value
+        // 数据可能是二维表达式或者其他情况
+        // 所以将数据用 interpret 跑一遍得到值
+        let value = interpret(ast.value, env)
+        // 讲变量名称和数据绑定一起
+        env.binding(name, value)
+    } else if (variable.type === AstType.ExpressionDotAccess) {
+        if (variable.object.value === 'this' || variable.object.value === 'class') {
+            // 拿到变量名称
+            let name = variable.property.value
+            // 数据可能是二维表达式或者其他情况
+            // 所以将数据用 interpret 跑一遍得到值
+            let value = interpret(ast.value, env)
+            // 讲变量名称和数据绑定一起
+            env.binding(name, value)
+        }
+    }
 }
 
 // 赋值
@@ -76,8 +89,15 @@ const applyExpressionAssignment = (ast, env) => {
         // 左边是访问对象变量
         // 拿到对象的变量名
         let object = ast.left.object.value
-        // 去环境拿到对应的数据
-        let variable = env.find(object)
+        // 变量名称
+        let variable = null
+        if (object === 'this' || object === 'class') {
+            // 如果是 this 就直接是当前环境
+            variable = env.env
+        } else {
+            // 去环境拿到对应的数据
+            variable = env.find(object)
+        }
 
         let property = ast.left.property.value
         // 右边可能是 变量 或者 二元表达式
@@ -175,42 +195,78 @@ const applyExpressionFunction = (ast, env) => {
 
 // 调用函数
 const applyExpressionCall = (ast, env) => {
-    // 拿到调用函数的名称
-    let callee = ast.callee.value
+    if (ast.callee.type === TokenType.variable) {
+        // 普通函数调用
+        // 拿到调用函数的名称
+        let callee = ast.callee.value
 
-    // 拿到函数声明时的变量
-    if (callee !== 'log') {
-        let process = env.find(callee)
-        // 基于函数定义时的环境就是静态作用域
-        // 下面一行代码换成 let envNew = Env.new(env) 就是动态作用域了，基于函数调用时解释器的环境
-        let envNew = Environment.new(process.env)
+        // 拿到函数声明时的变量
+        if (callee !== 'log') {
+            let process = env.find(callee)
+            // 基于函数定义时的环境就是静态作用域
+            // 下面一行代码换成 let envNew = Env.new(env) 就是动态作用域了，基于函数调用时解释器的环境
+            let envNew = Environment.new(process.env)
 
-        // 将入参和函数声明时的参数名称绑定
-        // 函数声明时入参名称
-        let params = process.params
+            // 将入参和函数声明时的参数名称绑定
+            // 函数声明时入参名称
+            let params = process.params
+            // 调用函数时的入参
+            let args = ast.arguments
+            for (let i = 0; i < args.length; i += 1) {
+                let name = params[i].value
+                // 入参可能是表达式，所以用 interpret 跑一下
+                let value = interpret(args[i], env)
+                envNew.binding(name, value)
+            }
+
+            // 将拿到函数的 body 去跑 interpret 拿到结果
+            let body = process.body
+            let r = interpret(body, envNew)
+            return r
+        } else {
+            // 调用函数时的入参
+            let args = ast.arguments
+            let values = []
+            for (let i = 0; i < args.length; i += 1) {
+                // 入参可能是表达式，所以用 interpret 跑一下
+                let value = interpret(args[i], env)
+                values.push(value)
+            }
+            log(...values)
+        }
+    } else if (ast.callee.type === AstType.ExpressionDotAccess) {
+        // 类方法调用
+        let callee = ast.callee
+
+        // 拿到对象变量的变量名
+        let object = callee.object.value
+        // 去环境拿到对应的数据
+        let variable = env.find(object)
+        // 拿到调用的函数名称
+        let property = callee.property.value
+
+        let newEnv = Environment.new(env)
+        // // 给类声明的时候做一个浅拷贝
+        // Object.assign(newEnv.env, variable)
+        newEnv.env = variable
+
+        let { body, params } = variable[property]
         // 调用函数时的入参
         let args = ast.arguments
         for (let i = 0; i < args.length; i += 1) {
             let name = params[i].value
             // 入参可能是表达式，所以用 interpret 跑一下
             let value = interpret(args[i], env)
-            envNew.binding(name, value)
+            newEnv.binding(name, value)
         }
 
-        // 将拿到函数的 body 去跑 interpret 拿到结果
-        let body = process.body
-        let r = interpret(body, envNew)
-        return r
-    } else {
-        // 调用函数时的入参
-        let args = ast.arguments
-        let values = []
-        for (let i = 0; i < args.length; i += 1) {
-            // 入参可能是表达式，所以用 interpret 跑一下
-            let value = interpret(args[i], env)
-            values.push(value)
+        let r = interpret(body, newEnv)
+
+        if (property === 'new') {
+            return newEnv.env
+        } else {
+            return r
         }
-        log(...values)
     }
 }
 
@@ -264,18 +320,34 @@ const applyExpressionObject = (ast, env) => {
 const applyExpressionDotAccess = (ast, env) => {
     // 拿到对象变量的变量名
     let object = ast.object.value
-    // 去环境拿到对应的数据
-    let variable = env.find(object)
 
-    let property = ast.property.value
+    if (object === 'this' || object === 'class') {
+        let property = ast.property.value
 
-    let r = variable[property]
-    return r
+        let r = env.find(property)
+        return r
+    } else {
+        // 去环境拿到对应的数据
+        let variable = env.find(object)
+
+        let property = ast.property.value
+
+        let r = variable[property]
+        return r
+    }
 }
 
 // 类
 const applyExpressionClass = (ast, env) => {
-    
+    // log('class ast', ast)
+    let classEnv = Environment.new(env)
+    classEnv.binding('__isClass', true)
+    classEnv.binding('__class', classEnv.env)
+
+    let body = ast.body.body
+    interpret(body, classEnv)
+
+    return classEnv.env
 }
 
 const interpret = (ast, env) => {
